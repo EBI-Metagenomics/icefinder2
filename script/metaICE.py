@@ -11,29 +11,16 @@ from typing import Tuple, List
 
 import shutil
 
+from textwrap import dedent
+
 from Bio import SeqIO
 from ete3 import NCBITaxa
 from Bio.SeqUtils import GC
 
-from script.function import getblast
+from script import function
 from script.helpers import run_command
 from script.config import Config
 
-# param = get_param()
-# workdir = param[0]
-# soft_dir = param[1]
-# kraken = param[1]
-# krakenDB = param[2]
-# blastn = param[5]
-# seqkit = param[6]
-# prodigal = param[7]
-# prokka = param[8]
-# macsyfinder = param[9]
-# hmmsearch = param[10]
-
-# tmp_dir = os.path.join(workdir, "tmp")
-# in_dir = os.path.join(tmp_dir, "fasta")
-# gb_dir = os.path.join(tmp_dir, "gbk")
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -102,12 +89,9 @@ def get_kraken_taxonomy(runID, fasta_file: str, config: Config):
 
     kraken2_command = [
         config.kraken,
-        "--db",
-        config.kraken,
-        "--report",
-        report,
-        "--output",
-        output,
+        "--db", config.kraken,
+        "--report", report,
+        "--output", output,
         fasta_file,
     ]
 
@@ -166,7 +150,7 @@ def get_fasta_stats(runID: str, renamed_fasta_file: Path, config: Config):
 
     cmd_result = run_command(seqkit_stats_command)
 
-    for line in cmd_result.readlines():
+    for line in cmd_result.strip().split('\n'):
         lines = line.strip().split()
         if lines[0] != "file":
             length = lines[4]
@@ -337,7 +321,7 @@ def prescan(runID: str, renamed_fasta_file: Path, config: Config) -> List[str]:
     hmmscan_tblout = config.run_id_dir / f"{runID}_prescan"
 
     hmm2scan_command = [
-        config.hmmscan2,
+        config.hmmscan,
         "--tblout",
         hmmscan_tblout,
         config.databases_dir / "ICEscan.hmm",
@@ -384,8 +368,8 @@ def run_prokka(runID: str, fasta_file: str, config: Config) -> Tuple[Path, Path]
     :param config: Configuration object containing necessary settings and paths.
     :type config: Config
 
-    :return: A tuple containing the paths to the generated protein FASTA file and GenBank file.
-    :rtype: Tuple[Path, Path]
+    :return: A tuple containing the paths to the generated protein FASTA file, GenBank file and a FFN file
+    :rtype: Tuple[Path, Path, Path]
 
     The Prokka command is constructed with the specified parameters, including options for
     fast processing, quiet mode, and the number of CPU cores to use. The output files are
@@ -399,51 +383,86 @@ def run_prokka(runID: str, fasta_file: str, config: Config) -> Tuple[Path, Path]
         "--quiet",
         "--cdsrnaolap",
         "--cpus", config.prokka_cores,
-        "--outdir", config.gb_dir,
+        "--outdir", config.outdir,
         "--prefix", runID
     ]
     
     run_command(prokka_command)
 
     # Check expected faa and gff result
-    prokka_faa = config.gb_dir / (runID + ".faa")
-    prokka_gbk = config.gb_dir / (runID + ".gbk")
+    prokka_faa = config.outdir / (runID + ".faa")
+    prokka_ffn = config.outdir / (runID + ".ffn")
+    prokka_gbk = config.outdir / (runID + ".gbk")
 
     if not prokka_faa.exists():
         raise ValueError(f"Prokka output {prokka_faa} doesn't exist")
 
     if not prokka_gbk.exists():
         raise ValueError(f"Prokka output {prokka_gbk} doesn't exist")
+
+    if not prokka_ffn.exists():
+        raise ValueError(f"Prokka output {prokka_ffn} doesn't exist")
     
-    return prokka_faa, prokka_gbk
+    return prokka_faa, prokka_gbk, prokka_ffn
 
 
-def run_icescan(runID: str, annotation_faa: Path, config: Config):
+def run_icescan(runID: str, annotation_faa: Path, config: Config) -> Path:
+    """Run ICEscan to identify integrative and conjugative elements from annotated sequences.
 
-    ICE_dir = os.path.join(tmp_dir, runID, runID + "_ICE")
-    if os.path.exists(ICE_dir):
-        os.system("rm -r " + ICE_dir) # ?
+    This function executes ICEscan using the specified parameters to analyze the provided
+    annotated FASTA file. It creates a directory for the results and checks for the existence
+    of the expected output file.
 
-    ICE_res = os.path.join(tmp_dir, runID, runID + "_ICE")
+    :param runID: A string identifier for the current run, used to name the output directory.
+    :type runID: str
+
+    :param annotation_faa: The input protein FASTA file path containing annotated sequences.
+    :type annotation_faa: Path
+
+    :param config: Configuration object containing necessary settings and paths.
+    :type config: Config
+
+    :return: The path to the output TSV file containing the results of the ICEscan analysis.
+    :rtype: Path
+
+    The function constructs the ICEscan command with specified options, including the database type,
+    model directory, and coverage profile. It checks for the existence of the output file
+    `all_systems.tsv` and raises an error if it is not found.
+    """
+    ice_results = config.run_id_dir / (runID + "_ICE")
+    if ice_results.exists():
+        ice_results.rmdir()
+
+    ice_results.mkdir(exist_ok=False)
 
     cmd = [
         config.macsyfinder,
         "--db-type", "ordered_replicon",
         "--hmmer", config.hmmsearch,
         "--models-dir", config.defensefinder_database,
-        "--models", "ICEscan all",
+        "--models", "ICEscan", "all",
         "--replicon-topology", "linear",
         "--coverage-profile", "0.3",
         "--sequence-db", annotation_faa,
-        "-o", ICE_res,
+        "-o", ice_results
     ]
 
     run_command(cmd)
 
+    # example: /tmp/tmpq4dd62bb/SRS146999/SRS146999_contig_8_ICE/all_systems.tsv
+    all_systems_tsv = ice_results / "all_systems.tsv"
 
-def getgff(runID):
-    gffile = os.path.join(gb_dir, runID + ".gff")
-    with open(gffile, "r") as gffin:
+    if not all_systems_tsv.exists():
+        raise ValueError(f"ICEScan output missing {all_systems_tsv}")
+
+    return all_systems_tsv
+
+
+def get_gff(runID: str, config: Config):
+
+    gff_ile = config.gb_dir / (runID + ".gff")
+
+    with open(gff_ile, "r") as gffin:
         trnadict = {}
         posdict = {}
         for line in gffin.readlines():
@@ -501,7 +520,7 @@ def pos_tag(pos, posdict, ICE, final, totalnum, dirtag):
 
 
 def merge_tRNA(runID, ICEdict, DRlist):
-    trnadict, posdict, header, totalnum = getgff(runID)
+    trnadict, posdict, header, totalnum = get_gff(runID)
     fICE = get_num(next(iter(ICEdict)))
     eICE = get_num(list(ICEdict.keys())[-1])
 
@@ -604,16 +623,14 @@ def merge_tRNA(runID, ICEdict, DRlist):
     )
 
 
-def get_DR(runID, config: Config):
-    DRindex = os.path.join(tmp_dir, runID, runID + "_DR")
-    DRout = os.path.join(tmp_dir, runID, runID + "_DRout")
+def get_DR(runID, annotation_faa: Path, config: Config):
+    DRindex = config.run_id_dir / (runID + "_DR")
+    DRout = config.run_id_dir / (runID + "_DRout")
 
     maktree_cmd = [
         config.mkvtree,
-        "-db",
-        infile,
-        "-indexname",
-        DRindex,
+        "-db", annotation_faa,
+        "-indexname", DRindex,
         "-dna",
         "-pl",
         "-lcp",
@@ -627,9 +644,9 @@ def get_DR(runID, config: Config):
 
     run_command(maktree_cmd)
 
-    vmatch_cmd = [config.vmatch, "-l", "15", DRindex, ">", DRout]
+    vmatch_cmd = [config.vmatch, "-l", "15", DRindex]
 
-    run_command(vmatch_cmd)
+    run_command(vmatch_cmd, output_file=DRout)
 
     DRlist = []
     with open(DRout, "r") as DRin:
@@ -646,49 +663,49 @@ def get_DR(runID, config: Config):
     return DRlist
 
 
-def get_ICE(runID: str, infile):
+def get_ICE(runID: str, annotations_faa: Path, config: Config):
 
+    all_systems_tsv = run_icescan(runID, annotations_faa, config)
 
+    ICEdict = {}
+    infodict = {}
 
-    ICE_res = os.path.join(ICE_dir, "all_systems.tsv")
+    with open(all_systems_tsv, 'r') as file:
+        for line in file:
+            if line.startswith('#'):
+                continue
+            if "Chromosome" not in line:
+                continue
+            row = line.strip().split("\t")
+            for field in row:
+                if "UserReplicon_IME" in field[5]:
+                    continue
+                gbname = field[1]
+                tags = get_feat(field[2])
+                mpf = field[5].split('/')[-1].split('_')[1]
 
+                if 'Relaxase@' in tags:
+                    mob = tags.split('@')[1]
+                else:
+                    mob = ''
 
-    ICEscan(runID)
+                ICEtag = 'ICE' + field[5].split('_')[-1]
 
+                ICEdict.setdefault(ICEtag, {})[gbname] = tags
 
-    with open(ICE_res, "r") as ICEin:
-        ICEdict = {}
-        infodict = {}
-        for line in ICEin.readlines():
-            if "Chromosome" in line:
-                lines = line.strip().split("\t")
-                if "UserReplicon_IME" not in lines[5]:
-                    gbname = lines[1]
-                    tags = get_feat(lines[2])
-                    mpf = lines[4].split("/")[-1].split("_")[1]
-
-                    if "Relaxase@" in tags:
-                        mob = tags.split("@")[1]
-                    else:
-                        mob = ""
-                    ICEtag = "ICE" + lines[5].split("_")[-1]
-
-                    ICEdict.setdefault(ICEtag, {})[gbname] = tags
-
-                    if ICEtag not in infodict:
-                        infodict[ICEtag] = {"mob": [], "mpf": []}
-                    if mob not in infodict[ICEtag]["mob"]:
-                        if mob:
-                            infodict[ICEtag]["mob"].append(mob)
-                    if mpf not in infodict[ICEtag]["mpf"]:
-                        infodict[ICEtag]["mpf"].append(mpf)
+                if ICEtag not in infodict:
+                    infodict[ICEtag] = {'mob': [], 'mpf': []}
+                if mob and mob not in infodict[ICEtag]['mob']:
+                    infodict[ICEtag]['mob'].append(mob)
+                if mpf and mpf not in infodict[ICEtag]['mpf']:
+                    infodict[ICEtag]['mpf'].append(mpf)
 
     dictICE = {}
     posdict = {}
     trnalist = []
     header = ""
 
-    DRlist = get_DR(runID, infile)
+    DRlist = get_DR(runID, annotations_faa, config)
 
     for key, value in ICEdict.items():
         (
@@ -708,10 +725,6 @@ def get_ICE(runID: str, infile):
         dictICE[key] = [myDR1, myDR2, myDR3, myDR4, fICE, eICE, finalstart, finalend]
 
     return dictICE, ICEdict, posdict, header, trnalist, infodict
-
-
-def args(runID):
-    return getblast(runID)
 
 
 def zill(header, num):
@@ -755,30 +768,25 @@ def get_args(
 
 def oritseq(runID, regi, infile, start: int, end: int, config: Config):
     oritseq = "-"
-    fafile = os.path.join(tmp_dir, runID, regi + "_fororit.fa")
+    
+    fafile = config.run_id_dir / (regi + "_fororit.fa")
+
     with open(fafile, "w") as orif:
         seq = getfa(infile, start, end)
         orif.write(">fororit\n")
         orif.write(seq)
 
-    oriT_Database = os.path.join(workdir, "data", "oriT_db")
-    blastn_out = os.path.join(tmp_dir, runID, regi + "_oriTout")
+    blastn_out = config.run_id_dir / (regi + "_oriTout")
+
     blast_cmd = [
         config.blastn,
-        "-db",
-        oriT_Database,
-        "-query",
-        fafile,
-        "-evalue",
-        "0.01",
-        "-word_size",
-        "11",
-        "-outfmt",
-        "'6 std qlen slen'",
-        "-num_alignments",
-        "1",
-        "-out",
-        blastn_out,
+        "-db", config.orit_blast_database,
+        "-query", fafile,
+        "-evalue", "0.01",
+        "-word_size", "11",
+        "-outfmt", "'6 std qlen slen'",
+        "-num_alignments", "1",
+        "-out", blastn_out,
     ]
 
     run_command(blast_cmd)
@@ -910,34 +918,43 @@ def getfa(infile, s, e):
 def get_map(
     sprunID: str,
     fasta_file: Path,
-    sequence_taxonomy_mapping: dict,
+    # sequence_taxonomy_mapping: dict,
     contig_ids_mapping: dict,
     annotation_faa: Path,
+    annotation_ffn: Path,
     config: Config
 ):
-    final_dir = config.tmp_dir / (f"{sprunID}/result")
-    js_dir = final_dir / "js"
-    js_dir.mkdir(exist_ok=True)
+    results_js_folder = config.outdir / "js"
+    results_js_folder.mkdir(parents=True, exist_ok=True)
 
-    # TODO: copy this when creating this the results foler
-    gcmap = os.path.join(workdir, "script", "js", "gcmap.js")
-    viewfile = os.path.join(workdir, "script", "js", "view.html")
+    gcmap = results_js_folder / "gcmap.js"
+    viewfile = results_js_folder / "view.html"
 
-    dictICE, ICEdict, posdict, header, trnalist, infodict = get_ICE(sprunID, fasta_file)
+    dictICE, ICEdict, posdict, header, trnalist, infodict = get_ICE(sprunID, annotation_faa, config)
 
-    argdict, vfdict, isdict, dfdict, metaldict, popdict, symdict = args(sprunID)
+    print(
+        dictICE,
+        ICEdict,
+        posdict,
+        header,
+        trnalist,
+        infodict
+    )
+
+    argdict, vfdict, isdict, dfdict, metaldict, popdict, symdict = function.get_blast_results(sprunID, annotation_faa, annotation_ffn, config)
 
     ICEss = {}
     for key, value in dictICE.items():
         genelist = []
-        regi = sprunID + "_" + key
-        regijs = "contig_" + sprunID.split("_contig_", 1)[-1] + "_" + key
+        region = sprunID + "_" + key
+        region_js_prefix = "contig_" + sprunID.split("_contig_", 1)[-1] + "_" + key
     
-        genefile = os.path.join(final_dir, regi + "_gene.json")
-        infofile = os.path.join(final_dir, regi + "_info.json")
-        gcjson = os.path.join(js_dir, regijs + "_gc.js")
-        mapfile = os.path.join(js_dir, regijs + ".js")
-        htmlfile = os.path.join(final_dir, regi + ".html")
+        genefile = config.outdir / f"{region}_gene.json"
+        infofile = config.outdir / f"{region}_info.json"
+
+        gcjs = results_js_folder / f"{region_js_prefix}_gc.js"
+        mapfile = results_js_folder / (region_js_prefix + ".js")
+        htmlfile = config.outdir / f"{region}.html"
     
         [myDR1, myDR2, myDR3, myDR4, fICE, eICE, finalstart, finalend] = value
 
@@ -1041,40 +1058,29 @@ def get_map(
         if myDR1 == "0":
             myDR1 = "1"
 
-        ICEss[regi] = "|".join([myDR1, myDR4, str(fICE), str(eICE)])
+        ICEss[region] = "|".join([myDR1, myDR4, str(fICE), str(eICE)])
 
-        host = sequence_taxonomy_mapping[contigID]
+        # host = sequence_taxonomy_mapping[contigID] TODO: disabled kraken
+    
         gcc = gc(fasta_file, int(myDR1), int(myDR4))
         source = contig_ids_mapping[contigID]
 
         if myDR2:
             DR1 = getfa(fasta_file, myDR1, myDR2)
             DR2 = getfa(fasta_file, myDR3, myDR4)
-            DRw = (
-                "attL:"
-                + myDR1
-                + ".."
-                + myDR2
-                + "("
-                + DR1
-                + ")  "
-                + "attR:"
-                + myDR3
-                + ".."
-                + myDR4
-                + "("
-                + DR2
-                + ")"
-            )
+            DRw = f"""\
+                attL: {myDR1}..{myDR2} ({DR1})  
+                attR: {myDR3}..{myDR4} ({DR2})
+            """.strip()
+
         else:
             DRw = "-"
 
-        oritseqs = oritseq(sprunID, regi, fasta_file, myDR1, myDR4)
-        # oritdesc = "<br>".join([oritseqs[i:i+63] for i in range(0, len(oritseqs), 63)])
+        oritseqs = oritseq(sprunID, region, fasta_file, myDR1, myDR4)
 
         ICEinfo = {
             "Contig source": source,
-            "Host Strain": host,
+            # "Host Strain": host, TODO: disabled kraken
             "GC Content (%)": gcc,
             "Length (bp)": str(int(e2) - int(s1) + 1),
             "oriT seq": oritseqs,
@@ -1103,18 +1109,17 @@ def get_map(
                 "start": start,
                 "end": end,
                 "strand": strand,
-                "locus_tag": "M" + str(i),
+                "locus_tag": f"M{i}",
                 "type": "others",
                 "color": color,
-                "description": "Location: "
-                + gene["pos"].split(" ")[0]
-                + " ("
-                + gene["pos"].split(" ")[2]
-                + " bp)<br>Type: "
-                + name
-                + "<br>Detail: "
-                + product,
+                "description": dedent(f"""\
+                    Location: {gene["pos"].split(" ")[0]} (
+                    {gene["pos"].split(" ")[2]} bp)<br>
+                    Type: {name}<br>
+                    Detail: {product}
+                """).strip(),
             }
+
             if strand == 1:
                 mapzlist.append(anno)
             else:
@@ -1122,46 +1127,56 @@ def get_map(
             i += 1
 
         head = "var borders = [];\nvar tta_codons = [];\nvar orfs ="
-        s = genelist[0]["pos"].split(" ")[0].split("..")[0]
-        e = genelist[-1]["pos"].split(" ")[0].split("..")[1]
+        start_position = genelist[0]["pos"].split(" ")[0].split("..")[0]
+        end_position = genelist[-1]["pos"].split(" ")[0].split("..")[1]
 
         gcdict = calculate_gc(fasta_file, int(s), int(e), 500, 50)
+
+        # TODO: re-enable
         with open(gcmap, "r") as original_file:
             original_content = original_file.read()
-        with open(gcjson, "w") as gein2:
+
+        with open(gcjs, "w") as gein2:
             gein2t = "var jsonData = " + str(gcdict) + ";"
             gein2.write(gein2t)
             gein2.write(original_content)
 
-        # with open(gcjson,'w') as gein2:
-        # json.dump(gcdict, gein2, indent=4)
+        with open(gcjs,'w') as gein2:
+            json.dump(gcdict, gein2, indent=4)
 
-        maps = (
-            str(mapzlist)
-            + ";\nvar orfs2 ="
-            + str(mapflist)
-            + ";\nvar clusterf2 = { start: "
-            + s
-            + ", end: "
-            + e
-            + ", idx: 1, orfs: orfs, borders: borders, tta_codons:tta_codons,\
-				  label: '', unordered: true };\nvar clusterr2 = { start: "
-            + s
-            + ", end: "
-            + e
-            + ", idx: 2, orfs: orfs2, borders: borders, tta_codons:tta_codons,\
-				  label: '', unordered: true };\nsvgene.drawClusters(\""
-            + regijs
-            + '", [clusterf2, clusterr2], 50, 920);'
-        )
+        maps = dedent(f"""\
+            {str(mapzlist)};
+            var orfs2 = {str(mapflist)};
+            var clusterf2 = {{
+                start: {s},
+                end: {e},
+                idx: 1,
+                orfs: orfs,
+                borders: borders,
+                tta_codons: tta_codons,
+                label: '',
+                unordered: true
+            }};
+            var clusterr2 = {{
+                start: {start_position},
+                end: {end_position},
+                idx: 2,
+                orfs: orfs2,
+                borders: borders,
+                tta_codons: tta_codons,
+                label: '',
+                unordered: true
+            }};
+            svgene.drawClusters("{region_js_prefix}", [clusterf2, clusterr2], 50, 920);
+        """)
+
         with open(mapfile, "w") as map_file:
             map_file.write(head + maps)
 
-        with open(viewfile, "r") as file:
-            file_content = file.read()
-        new_content = file_content.replace("XXXX", regijs)
         with open(htmlfile, "w") as file:
-            file.write(new_content)
+                with open(viewfile, "r") as file:
+                    file.write(file.read().replace("XXXX", region_js_prefix))
+                
 
     return ICEss
 
@@ -1200,13 +1215,14 @@ def get_fasta(
     etag: str,
     config: Config,
 ):
-    fafile = os.path.join(tmp_dir, runID, runID + ".fa")
-    faafile = os.path.join(tmp_dir, "gbk", runID + ".faa")
+    fasta_file = config.run_id_dir / (runID + ".fa")
+    faa_file = config.gb_dir / (runID + ".faa")
 
     outfa = os.path.join(result_dir, key + ".fa")
     outfaa = os.path.join(result_dir, key + ".faa")
 
-    seq_record = SeqIO.read(fafile, "fasta")
+    seq_record = SeqIO.read(fasta_file, "fasta")
+
     with open(outfa, "w") as output_handle1:
 
         sequence = seq_record.seq[start - 1 : end]
@@ -1220,7 +1236,7 @@ def get_fasta(
 
         SeqIO.write(seq_record, output_handle1, "fasta")
 
-    faa_records = SeqIO.parse(faafile, "fasta")
+    faa_records = SeqIO.parse(faa_file, "fasta")
     with open(outfaa, "w") as output_handle2:
         for faa_record in faa_records:
             seq_id = get_num(faa_record.id)
@@ -1235,13 +1251,13 @@ def _meta(runID, input_fasta, config: Config):
 
     prescanned_fasta_records = prescan(runID, renamed_fasta, config)
 
-    fasta_stats_json = get_fasta_stats(runID, rename_fasta, config)
+    fasta_stats_json = get_fasta_stats(runID, renamed_fasta, config)
 
-    drawout, sequence_taxonomy_mapping, report = get_kraken_taxonomy(runID)
+    # TODO: disabled kraken
+    # drawout, sequence_taxonomy_mapping, report = get_kraken_taxonomy(runID)
+    # copy_files(report, config.outdir)
 
-    copy_files(drawout, config.outdir)
     copy_files(fasta_stats_json, config.outdir)
-    copy_files(report, config.outdir)
 
     ICEsum = config.run_id_dir / (runID + "_ICEsum.json")
     ICEsumlist = []
@@ -1263,18 +1279,15 @@ def _meta(runID, input_fasta, config: Config):
                     ">%s\n%s\n" % (sequence_prefix, record_sequence)
                 )
 
-            final_dir = config.outdir / sequence_prefix / "result"
-            final_dir.mkdir(exist_ok=True)
-
             # Annotate with prokka
             # TODO: If I'm reading this correctly, it's running prokka again (even though it ran prokka on the whole set of contigs)
-            annotation_faa, _ = run_prokka(sequence_prefix, contig_fasta, config)
+
+            # The output files .faa and .gbk are stored directly in this process
+            annotation_faa, _, annotation_ffn  = run_prokka(sequence_prefix, contig_fasta, config)
 
             ICEss = get_map(
-                sequence_prefix, sequence_taxonomy_mapping, contig_ids_mapping, annotation_faa
+                sequence_prefix, contig_fasta, contig_ids_mapping, annotation_faa, annotation_ffn, config
             )
-
-            copy_files(final_dir, config.outdir)
 
             if ICEss:
                 for key, value in ICEss.items():
@@ -1285,8 +1298,7 @@ def _meta(runID, input_fasta, config: Config):
                     ICEs = {
                         "id": str(idx),
                         "seqid": contig_ids_mapping[seq_record.id],
-                        "species": sequence_taxonomy_mapping[seq_record.id],
-                        # 'species':'',
+                        # "species": sequence_taxonomy_mapping[seq_record.id], TODO: disabled kraken2
                         "location": f"{start}..{end}",
                         "length": length,
                         "detail": key,
@@ -1296,7 +1308,7 @@ def _meta(runID, input_fasta, config: Config):
 
                     get_fasta(
                         sequence_prefix,
-                        result_dir,
+                        config.outdir,
                         contig_ids_mapping,
                         key,
                         start,
@@ -1309,10 +1321,8 @@ def _meta(runID, input_fasta, config: Config):
     with open(ICEsum, "w") as ice_file:
         json.dump(ICEsumlist, ice_file, indent=4)
 
-    copy_files(ICEsum, config.outdir)
-
-    jsback = os.path.join(config.outdir, "script", "js")
-    copy_files(jsback, str(config.outdir / "js"))
+    # Copy the js accesory files
+    copy_files(config.icefinder2_static_directory, str(config.outdir / "js"))
 
     # TODO: do we need this?
     # delete_folders_starting_with_keyword(tmp_dir, runID)

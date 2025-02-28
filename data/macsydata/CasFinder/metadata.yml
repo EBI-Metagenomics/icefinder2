@@ -1,0 +1,17 @@
+cite:
+- "Abby SS, Néron B, Ménager H, Touchon M, Rocha EPC (2014).\nMacSyFinder: A Program\
+  \ to Mine Genomes for Molecular Systems with an Application to CRISPR-Cas Systems.\
+  \ \nIn PLoS ONE 9(10): e110726.\nhttps://doi.org/10.1371/journal.pone.0110726\n"
+- "Couvin, D., Bernheim, A., Toffano-Nioche, C., Touchon, M., Michalik, J., Néron,\
+  \ B., Rocha E.P.C, Vergnaud, G., Gautheret, D., Pourcel, C. (2018) \nCRISPRCasFinder,\
+  \ an update of CRISRFinder, includes a portable version, enhanced performance and\
+  \ integrates search for Cas proteins.\nNucleic Acids Research, Volume 46, Issue\
+  \ W1, 2 July 2018, Pages W246–W251. \nhttps://doi:10.1093/nar/gky425\n"
+copyright: 2014-2022, Institut Pasteur, CNRS
+doc: https://github.com/macsy-models/CasFinder
+license: CC BY-NC-SA 4.0 (https://creativecommons.org/licenses/by-nc-sa/4.0/)
+maintainer:
+  email: mtouchon@pasteur.fr
+  name: Touchon Marie
+short_desc: CasFinder - Models for detection of CRISPR-Cas systems.
+vers: 3.1.0

@@ -12,7 +12,7 @@ import argparse
 from pathlib import Path
 
 from script.checkin import get_fagb
-from script.single import _single
+# from script.single import _single
 from script.metaICE import _meta
 from script.config import get_configuration
 
@@ -62,15 +62,15 @@ if __name__ == "__main__":
     input_file = args.input
     execution_type = args.type
 
-    file_name_without_extension = Path(input_file).extension
-    runID = file_name_without_extension
+    runID = Path(input_file).stem
 
     configuration = get_configuration(runID, args.config, args.outdir)
 
     infile, filetype = get_fagb(runID, input_file, execution_type, configuration)
 
     if execution_type == "Single":
-        _single(runID, infile, filetype, configuration)
+        # _single(runID, infile, filetype, configuration)
+        pass
     else:
         _meta(runID, infile, configuration)
 
