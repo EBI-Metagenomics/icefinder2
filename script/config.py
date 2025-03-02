@@ -89,7 +89,7 @@ def get_configuration(run_id: str, config_file: str,outdir_path: str) -> Config:
         run_id_dir=run_id_dir,
         fa_dir=fa_dir,
         gb_dir=gb_dir,
-        icefinder2_static_directory=configuration.get("Param", "icefinder2_static_directory"),
+        icefinder2_static_directory=Path(configuration.get("Param", "icefinder2_static_directory")),
         # kraken=configuration.get("Param", "kraken"),
         # krakenDB=configuration.get("Param", "krakenDB"),
         defensefinder=configuration.get("Param", "defensefinder"),
