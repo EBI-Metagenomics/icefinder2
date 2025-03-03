@@ -1,6 +1,6 @@
 FROM mambaorg/micromamba:2.0.5
 
-ENV VERSION="2.0"
+ENV VERSION="2.0.1"
 
 LABEL maintainer="Microbiome Informatics Team www.ebi.ac.uk/metagenomics"
 LABEL base_image="mambaorg/micromamba:2.0.5"
@@ -22,13 +22,15 @@ ENV PATH="$MAMBA_ROOT_PREFIX/bin:$PATH"
 
 USER root
 
-WORKDIR /icefinder2-2.0
+COPY . /src
+
+WORKDIR /icefinder2_2.0.1
 
 # Create a config.ini file and configure Kraken DB path dynamically
-RUN cat <<EOL > /icefinder2-2.0/config.ini
+RUN cat <<EOL > /icefinder2_2.0.1/config.ini
 [Param]
-kraken=$(which kraken2)
-krakenDB=/krakenDB
+# kraken=$(which kraken2)
+# krakenDB=/krakenDB
 defensefinder=$(which defense-finder)
 blastp=$(which blastp)
 blastn=$(which blastn)
@@ -37,12 +39,20 @@ prodigal=$(which prodigal)
 prokka=$(which prokka)
 macsyfinder=$(which macsyfinder)
 hmmsearch=$(which hmmsearch)
-hmmscan2=$(which hmmscan)
+# For this one - we use the binary bunlded with the source cod
+# hmmscan=/src/tool/hmmscan2
+hmmscan=$(which hmmscam)
 vmatch=$(which vmatch)
 aragorn=$(which aragorn)
 mkvtree=$(which mkvtree)
+
+# IceFinder2 static (js, css) files
+icefinder2_static_directory = /src/script/js
+
+# Databases
+databases_dir = /src/data
+
 EOL
 
-ENV PATH="$MAMBA_ROOT_PREFIX/bin:/icefinder2-2.0:$PATH"
+ENV PATH="$MAMBA_ROOT_PREFIX/bin:/icefinder2_2.0.1:$PATH"
 
-WORKDIR /icefinder2-2.0

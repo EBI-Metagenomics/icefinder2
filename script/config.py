@@ -42,7 +42,8 @@ class Config:
     symbiosis_blast_database: Path
     transposase_blast_database: Path
     orit_blast_database: Path
-    ete3ncbi_database: Path
+    # TODO: disable
+    # ete3ncbi_database: Path
     # Results / outdirectory
     outdir: Path
 
@@ -73,7 +74,8 @@ def get_configuration(run_id: str, config_file: str,outdir_path: str) -> Config:
     if not databases_dir.exists():
          raise FileNotFoundError(f"Missing database base path: {databases_dir}")
 
-    ete3ncbi_database = Path(configuration.get("Param", "ete3ncbi_database"))
+    # TODO: disabled
+    # ete3ncbi_database = Path(configuration.get("Param", "ete3ncbi_database"))
 
     defensefinder_database = databases_dir / "macsydata"
     virulence_blast_database = databases_dir/ "virulence"
@@ -106,7 +108,7 @@ def get_configuration(run_id: str, config_file: str,outdir_path: str) -> Config:
         aragorn=configuration.get("Param", "aragorn"),
         mkvtree=configuration.get("Param", "mkvtree"),
         databases_dir=databases_dir,
-        ete3ncbi_database=ete3ncbi_database,
+        # ete3ncbi_database=ete3ncbi_database,
         defensefinder_database=defensefinder_database,
         virulence_blast_database=virulence_blast_database,
         resfinder_blast_database=resfinder_blast_database,
