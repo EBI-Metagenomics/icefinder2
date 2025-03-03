@@ -1,8 +1,17 @@
----
+cite:
+- "Tesson, Florian, Alexandre Hervé, Ernest Mordret, Marie Touchon, \nCamille d’Humières,\
+  \ Jean Cury, and Aude Bernheim. \n\"Systematic and Quantitative View of the Antiviral\
+  \ Arsenal of Prokaryotes.\"\" \nNature Communications 13, no. 1 (April 22, 2022):\
+  \ 2561. \nhttps://doi.org/10.1038/s41467-022-30269-9.\n"
+- "Tesson, Florian, Remi Planel, Artyom A. Egorov, Heloise Georjon, \nHugo Vaysset,\
+  \ Bryan Brancotte, Bertrand Neron, et al.\n“A Comprehensive Resource for Exploring\
+  \ Antiphage Defense: DefenseFinder\nWebservice, Wiki and Databases.” bioRxiv, January\
+  \ 26, 2024.\nhttps://doi.org/10.1101/2024.01.25.577194.\n"
+copyright: 2022-2024, Institut Pasteur, CNRS
+doc: https://defensefinder.mdmlab.fr/wiki
+license: CC BY-NC-SA 4.0 (https://creativecommons.org/licenses/by-nc-sa/4.0/)
 maintainer:
-  name: Alexandre Hervé
-  email: alexandreherve@protonmail.com
+  email: florian.tesson@pasteur.fr
+  name: Florian Tesson
 short_desc: Allow for a systematic search of all known anti-phage systems
-vers: 1.2.2
-license: GPL-3.0
-doc: ./README.md
+vers: 2.0.2

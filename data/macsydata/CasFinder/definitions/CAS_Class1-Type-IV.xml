@@ -1,0 +1,156 @@
+<!--
+Author: Marie Touchon
+Copyright: 2014-2022 Institut Pasteur Paris, CNRS
+See the COPYRIGHT file for details
+
+This file is a part of CasFinder package.
+CasFinder is a package of models for macyfinder
+(https://github.com/gem-pasteur/macsyfinder)
+
+CasFinder is distributed under the terms of
+Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+see LICENCE file ship with the package or visit
+http://creativecommons.org/licenses/by-nc-sa/4.0/
+for more details.
+-->
+
+
+<model inter_gene_max_space="3" min_mandatory_genes_required="1" min_genes_required="2" max_nb_genes="20" vers="2.0">
+
+### csf1gr8 - cas8-like ###
+<gene name="csf1gr8_IV-A_3" presence="mandatory">
+    <exchangeables>
+        <gene name="csf1gr8_IV-B_1"/>
+        <gene name="csf1gr8_IV-A_2"/>
+        <gene name="csf1gr8_IV-A_5"/>
+        <gene name="csf1gr8_IV-A_6"/>
+    </exchangeables>
+</gene>
+
+### csf2gr7 - cas7 ###
+<gene name="csf2gr7_IV-A_1" presence="mandatory">
+  <exchangeables>
+        <gene name="csf2gr7_IV-B_1"/>
+      	<gene name="csf2gr7_IV_1"/>
+    </exchangeables>
+</gene>
+
+### csf3gr5 - cas5 ###
+<gene name="csf3gr5_IV-A_1" presence="mandatory">
+    <exchangeables>
+        <gene name="csf3gr5_IV-B_1"/>
+      	<gene name="csf3gr5_IV-A_2"/>
+        <gene name="csf3gr5_IV-C_4"/>
+	</exchangeables>
+</gene>
+
+<gene name="csf3-csf1_IV-E_1" presence="mandatory"> </gene>
+
+### csf5 - cas6 ###
+<gene name="csf5gr6_IV-A_1" presence="mandatory"> </gene>
+
+<gene name="cas6_I_II_III_IV_V_VI_15" presence="accessory">
+       <exchangeables>
+          <gene name="cas6e_I_II_III_IV_V_VI_2"/>
+          <gene name="cas6e_I_II_III_IV_V_VI_3"/>
+       	  <gene name="cas6_I_II_III_IV_V_VI_22"/>
+          <gene name="cas6_I_II_III_IV_V_VI_7"/>
+          <gene name="cas6_I_II_III_IV_V_VI_10"/>
+          <gene name="cas6_I_II_III_IV_V_VI_11"/>
+          <gene name="cas6_I_II_III_IV_V_VI_12"/>
+          <gene name="cas6_I_II_III_IV_V_VI_13"/>
+          <gene name="cas6_I_II_III_IV_V_VI_14"/>
+          <gene name="cas6_I_II_III_IV_V_VI_17"/>
+          <gene name="cas6_I_II_III_IV_V_VI_20"/>  
+
+          <gene name="cas6_IV-D_1"/>
+          <gene name="cas6_IV-D_2"/> 
+
+          <gene name="cas6_IV-E_1"/>
+      </exchangeables>
+</gene>
+
+### csf4gr11 - cas11 ###
+<gene name="csf4gr11_IV-B_2" presence="mandatory">
+    <exchangeables>
+      	<gene name="csf4gr11_IV-B_4"/>
+        <gene name="csf4_IV-E_1"/>
+	</exchangeables>
+</gene>
+
+
+### LS ###
+<gene name="LSIVC_IV-C_1" presence="mandatory"> </gene>
+
+### SS ###
+<gene name="SSIVC_IV-C_1" presence="mandatory"> </gene>
+
+### csf4 - dinG ###
+<gene name="csf4_IV-A_1" presence="accessory"> #IVA
+    <exchangeables>
+        <gene name="csf4_IV-A1_1"/> #IVA
+        <gene name="csf4_IV-A1_2"/> #IVA
+    </exchangeables>
+</gene>
+
+### cas10-like  ###
+<gene name="cas10-like_IV-C_1" presence="mandatory">
+    <exchangeables>
+        <gene name="cas10-like_IV-C_2"/>
+        <gene name="cas10-like_IV-C_3"/>
+        <gene name="cas10-like_IV-C_4"/>
+    </exchangeables>
+</gene>
+
+### cas11  ###
+<gene name="cas11_IV-C_1" presence="mandatory">
+    <exchangeables>
+        <gene name="cas11_IV-C_2"/>
+        <gene name="cas11_IV-C_3"/>
+    </exchangeables>
+</gene>
+
+### cas2 ###
+<gene name="cas2_I_II_III_IV_V_VI_3" presence="accessory">
+      <exchangeables>
+        <gene name="cas2_I_II_III_IV_V_VI_1"/>
+        <gene name="cas2_I_II_III_IV_V_VI_5"/>
+        <gene name="cas2_I_II_III_IV_V_VI_6"/>
+        <gene name="cas2_I_II_III_IV_V_VI_8"/>
+        <gene name="cas2_I_II_III_IV_V_VI_9"/>
+        <gene name="cas2_I_II_III_IV_V_VI_10"/>
+        <gene name="cas2_I_II_III_IV_V_VI_11"/>
+        <gene name="cas2_I_II_III_IV_V_VI_13"/>
+      </exchangeables>
+</gene>
+
+### cas4 ###
+<gene name="cas4_I_II_III_IV_V_VI_1" presence="accessory"> </gene>
+
+### cas4 ###
+<gene name="cas4_I_II_III_IV_V_VI_1" presence="accessory"> </gene>
+<gene name="recD_IV-D_1"  presence="accessory"> </gene>
+
+#########################
+# neutral genes
+#########################
+
+<gene name="csf1gr8_IV_1" presence="neutral"> </gene>
+
+<gene name="DEDDh_I_II_III_IV_V_VI_1" presence="neutral" inter_gene_max_space="1"> </gene>
+<gene name="PD_DExK_I_II_III_IV_V_VI_1" presence="neutral" inter_gene_max_space="1"> </gene>
+<gene name="PD_DExK_I_II_III_IV_V_VI_4" presence="neutral" inter_gene_max_space="1"> </gene>
+<gene name="PD_DExK_I_II_III_IV_V_VI_5" presence="neutral" inter_gene_max_space="1"> </gene>
+
+<gene name="PrimPol_I_II_III_IV_V_VI_1" presence="neutral" inter_gene_max_space="1"> </gene>
+
+<gene name="WYL_I_II_III_IV_V_VI_1" presence="neutral" inter_gene_max_space="1"> </gene>
+<gene name="WYL_I_II_III_IV_V_VI_4" presence="neutral" inter_gene_max_space="1"> </gene>
+
+<gene name="RT_I_II_III_IV_V_VI_1" presence="neutral" inter_gene_max_space="1"> </gene>
+
+<gene name="csm3gr7_III_IV" presence="neutral"> </gene>
+
+<gene name="cas1_I-F_1" presence="neutral"> </gene>
+<gene name="cas1_I-E_1" presence="neutral"> </gene>
+</model>
