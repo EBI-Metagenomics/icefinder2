@@ -1087,9 +1087,21 @@ def get_map(
 
         oritseqs = oritseq(sprunID, region, fasta_file, myDR1, myDR4, config)
 
+
+        print(region)
+        if 'IME' in region:
+            typeIE = 'IME'
+        elif 'AICE' in region:
+            typeIE = 'AICE'
+        else:
+            typeIE = 'T4SS-type ICE'
+
+
         ICEinfo = {
             "Contig source": source,
             # "Host Strain": host, TODO: disabled kraken
+            "Type": typeIE,
+            "Location (nt)":myDR1+'..'+myDR4,
             "GC Content (%)": gcc,
             "Length (bp)": str(int(e2) - int(s1) + 1),
             "oriT seq": oritseqs,
