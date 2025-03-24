@@ -22,7 +22,7 @@ ENV PATH="$MAMBA_ROOT_PREFIX/bin:$PATH"
 
 USER root
 
-COPY . /src
+COPY . /icefinder2_2.0.1
 
 WORKDIR /icefinder2_2.0.1
 
@@ -40,17 +40,16 @@ prokka=$(which prokka)
 macsyfinder=$(which macsyfinder)
 hmmsearch=$(which hmmsearch)
 # For this one - we use the binary bunlded with the source cod
-# hmmscan=/src/tool/hmmscan2
-hmmscan=$(which hmmscam)
+hmmscan=/icefinder2_2.0.1/tool/hmmscan2
 vmatch=$(which vmatch)
 aragorn=$(which aragorn)
 mkvtree=$(which mkvtree)
 
 # IceFinder2 static (js, css) files
-icefinder2_static_directory = /src/script/js
+icefinder2_static_directory = /icefinder2_2.0.1/script/js
 
 # Databases
-databases_dir = /src/data
+databases_dir = /icefinder2_2.0.1/data
 
 EOL
 
