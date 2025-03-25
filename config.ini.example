@@ -1,0 +1,24 @@
+[Param]
+defensefinder=
+blastp=
+blastn=
+seqkit=
+prodigal=
+prokka=
+macsyfinder=
+hmmsearch=
+hmmscan=
+vmatch=
+aragorn=
+mkvtree=
+
+# IceFinder2 static (js, css) files
+icefinder2_static_directory = /path-to-source-code/script/js
+
+# Databases
+databases_dir = /src/data
+
+# TODO: disabled
+# kraken=/opt/conda/bin/kraken2
+# krakenDB=/krakenDB
+# ete3ncbi_database = 

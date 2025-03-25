@@ -1,0 +1,17 @@
+<model_config>
+    
+    <weights>
+        <mandatory>1</mandatory>
+        <accessory>1</accessory>
+        <exchangeable>1</exchangeable>
+        <redundancy_penalty>1</redundancy_penalty>   
+    </weights>
+
+    <filtering>
+        <e_value_search>0.1</e_value_search>
+        <i_evalue_sel>0.01</i_evalue_sel>
+        <coverage_profile>0.4</coverage_profile>
+        <cut_ga>True</cut_ga>
+    </filtering>
+
+</model_config>
