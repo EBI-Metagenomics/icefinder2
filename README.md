@@ -45,7 +45,7 @@ to the results in the directory 'example/result_demo'.
 > [!NOTE]
 > DefenseFinder and MacSyFinder currently support the specified versions only. We will be conducting version updates later.
 
-## Input data
+## Input data
 
 At present, ICEfinder2 accepts the bacterial genome sequences in the GenBank or FASTA format. 
 And You can input a single bacterial sequence (in either FASTA or GenBank format) or multiple metagenome sequences (in FASTA format) for analysis.
